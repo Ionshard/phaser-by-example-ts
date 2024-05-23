@@ -4,7 +4,7 @@ import GameOver from "./scenes/gameover";
 /*
 This is the main configuration file for the game.
 */
-const config = {
+const config: Phaser.Types.Core.GameConfig = {
   width: 600,
   height: 300,
   scale: {
@@ -16,11 +16,11 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 350 },
+      gravity: { x: 0, y: 350 },
       debug: true,
     },
   },
   scene: [Game, GameOver],
 };
 
-const game = new Phaser.Game(config);
+export const game = new Phaser.Game(config);

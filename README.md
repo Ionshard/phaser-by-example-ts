@@ -2,6 +2,18 @@
 
 When starting to learn Phaser I wanted to use Typescript since I use it professionally for web development ... however I found using Typescript with Phaser to be confusing and with very little documentation. So this is my attempt to convert the Phaser by Example book to use Typescript.
 
+## Converted Examples:
+
+- [ ] Blastemup
+- [ ] dungeon
+- [ ] fate
+- [ ] mars
+- [ ] pushpull
+- [x] runner
+- [ ] starshake
+- [ ] wallhammer
+- [ ] zenbaki
+
 # Original README
 
 ![alt text](Phaser-by-Example.jpg "Phaser by Example Cover")
