@@ -1,5 +1,20 @@
+import { ShootingPatternType } from "./shooting_patterns";
+
 class PowerUp extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y, name = "plenny0", power = "fruit") {
+  power: ShootingPatternType;
+  id: number;
+  shadow: Phaser.GameObjects.Image & { body: Phaser.Physics.Arcade.Body };
+  direction: number;
+
+  declare body: Phaser.Physics.Arcade.Body;
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    name = "plenny0",
+    power: ShootingPatternType = "fruit"
+  ) {
     super(scene, x, y, name);
     this.name = name;
     this.power = power;
@@ -18,11 +33,17 @@ class PowerUp extends Phaser.GameObjects.Sprite {
   /*
    The power-up also spawns a shadow.
     */
-  spawnShadow(x, y) {
+  spawnShadow(x: number, y: number) {
+    /**
+     * Typescript addition: I would love to do this better. I hate type
+     * assertions! However, it's better to do one assertion here on creation
+     * rather than every time we use it.
+     */
     this.shadow = this.scene.add
       .image(x + 20, y + 20, "plenny0")
       .setTint(0x000000)
-      .setAlpha(0.4);
+      .setAlpha(0.4) as typeof this.shadow;
+
     this.scene.physics.add.existing(this.shadow);
     this.shadow.body.setVelocityX(-100);
   }

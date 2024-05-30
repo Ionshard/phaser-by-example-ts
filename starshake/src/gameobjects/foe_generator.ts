@@ -1,7 +1,20 @@
+import Game from "../scenes/game";
 import Foe from "./foe";
 
 export default class FoeGenerator {
-  constructor(scene) {
+  scene: Game;
+  waveFoes: never[];
+  activeWave: boolean;
+  waves: number;
+  generateEvent1: any;
+  generateEvent2: any;
+  generateEvent3: any;
+  generateEvent4: any;
+  laughterEvent: any;
+  path: Phaser.Curves.Path;
+  graphics: any;
+
+  constructor(scene: Game) {
     this.scene = scene;
     this.waveFoes = [];
     this.generate();
@@ -14,7 +27,12 @@ export default class FoeGenerator {
     */
   generate() {
     if (this.scene.number === 4) {
-      this.scene.time.delayedCall(2000, () => this.releaseGuinxu(), null, this);
+      this.scene.time.delayedCall(
+        2000,
+        () => this.releaseGuinxu(),
+        undefined,
+        this
+      );
     } else {
       this.generateEvent1 = this.scene.time.addEvent({
         delay: 7000,
@@ -79,12 +97,23 @@ export default class FoeGenerator {
   This is the function that stops the generation of foes.
   */
   stop() {
-    clearInterval(this.generationIntervalId);
+    /**
+     * Typescript Addition: This seems to be unused.
+     */
+    // clearInterval(this.generationIntervalId);
+
     this.scene.foeGroup.children.entries.forEach((foe) => {
       if (foe === null || !foe.active) return;
       foe.destroy();
     });
   }
+
+  /**
+   * Typescript Addition: This seems to be unused.
+   */
+  // generationIntervalId(generationIntervalId: any) {
+  //   throw new Error("Method not implemented.");
+  // }
 
   /*
   This is called when the scene is finished and it takes care of destroying the generation events.
@@ -133,7 +162,7 @@ export default class FoeGenerator {
     const minus = Phaser.Math.Between(-1, 1) > 0 ? 1 : -1;
 
     Array(difficulty)
-      .fill()
+      .fill(null)
       .forEach((_, i) => this.addOrder(i, x, y, minus));
   }
 
@@ -147,7 +176,7 @@ export default class FoeGenerator {
     const minus = Phaser.Math.Between(-1, 1) > 0 ? 1 : -1;
 
     Array(difficulty)
-      .fill()
+      .fill(null)
       .forEach((_, i) => this.addToWave(i));
     this.activeWave = true;
   }
@@ -205,7 +234,7 @@ export default class FoeGenerator {
   /*
   This function generates and ordered group of foes.
   */
-  addOrder(i, x, y, minus) {
+  addOrder(i: number, x: number, y: number, minus: number) {
     const offset = minus * 70;
 
     this.scene.foeGroup.add(
@@ -216,7 +245,7 @@ export default class FoeGenerator {
   /*
   This function adds a foe to the wave.
   */
-  addToWave(i) {
+  addToWave(i: number) {
     const foe = new Foe(
       this.scene,
       Phaser.Math.Between(32, this.scene.width - 32),
@@ -243,12 +272,12 @@ export default class FoeGenerator {
       this.path.draw(this.graphics);
 
       this.scene.foeWaveGroup.children.entries.forEach((foe) => {
-        if (foe === null || !foe.active) return;
+        if (foe === null || !foe.active || !(foe instanceof Foe)) return;
         let t = foe.z;
         let vec = foe.getData("vector");
         this.path.getPoint(t, vec);
         foe.setPosition(vec.x, vec.y);
-        foe.shadow.setPosition(vec.x + 20, vec.y + 20);
+        foe.shadow?.setPosition(vec.x + 20, vec.y + 20);
         foe.setDepth(foe.y);
       });
 
@@ -260,6 +289,7 @@ export default class FoeGenerator {
     }
 
     this.scene.foeGroup.children.entries.forEach((foe) => {
+      if (!(foe instanceof Foe)) return;
       if (foe === null || !foe.active || foe.y > this.scene.height + 100)
         foe.destroy();
       foe.update();

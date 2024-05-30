@@ -10,9 +10,18 @@ When starting to learn Phaser I wanted to use Typescript since I use it professi
 - [ ] mars
 - [ ] pushpull
 - [x] runner
-- [ ] starshake
+- [x] starshake
 - [ ] wallhammer
 - [ ] zenbaki
+
+## Dev Notes
+
+To convert all js files to ts in a directory:
+```bash
+for i in $(find . -iname "*.js"); do
+    git mv "$i" "$(echo $i | rev | cut -d '.' -f 2- | rev).ts";
+done
+```
 
 # Original README
 

@@ -1,9 +1,65 @@
+import Foe from "../gameobjects/foe";
 import FoeGenerator from "../gameobjects/foe_generator";
+import FoeShot from "../gameobjects/foe_shot";
 import Player from "../gameobjects/player";
 import PowerUp from "../gameobjects/powerup";
 import SceneEffect from "../gameobjects/scene_effect";
+import { ShootingPatternType } from "../gameobjects/shooting_patterns";
+import Shot from "../gameobjects/shot";
+
+const isShot = (
+  gameObject: Phaser.GameObjects.GameObject
+): gameObject is Shot | FoeShot =>
+  ["shot", "foeShot"].includes(gameObject.name);
+
+type Score = {
+  scoreText: Phaser.GameObjects.BitmapText;
+};
+
+type Sound =
+  | Phaser.Sound.NoAudioSound
+  | Phaser.Sound.HTML5AudioSound
+  | Phaser.Sound.WebAudioSound;
+
+export type PlayerName = "player1" | "player2";
 
 export default class Game extends Phaser.Scene {
+  player: Player | null;
+  score: number;
+  scoreText: null;
+  name: any;
+  number: any;
+  next: any;
+  currentPowerUp: number;
+  width: number;
+  height: number;
+  center_width: number;
+  center_height: number;
+  background: Phaser.GameObjects.TileSprite;
+  lastDestroyedWaveFoe: { x: any; y: any };
+  shake: PowerUp;
+  powerUps: any;
+  scores: Record<PlayerName, Score>;
+  trailLayer: Phaser.GameObjects.Layer;
+  players: Phaser.GameObjects.Group;
+  shotsLayer: Phaser.GameObjects.Layer;
+  shots: Phaser.GameObjects.Group;
+  foeGroup: Phaser.GameObjects.Group;
+  foeWaveGroup: Phaser.GameObjects.Group;
+  foeShots: Phaser.GameObjects.Group;
+  foes: FoeGenerator;
+  available: ShootingPatternType[];
+  audios: {
+    shot: Sound;
+    foeshot: Sound;
+    explosion: Sound;
+    foexplosion: Sound;
+    foedestroy: Sound;
+    stageclear1: Sound;
+    stageclear2: Sound;
+    boss: Sound;
+  };
+
   constructor() {
     super({ key: "game" });
     this.player = null;
@@ -14,7 +70,7 @@ export default class Game extends Phaser.Scene {
   /*
     We need to initialize the scene with the data we passed from the previous scene, especially the number of the stage to load the correct background. Also, we need to get the current power-up from the registry, although we are not applying it yet.
     */
-  init(data) {
+  init(data: { name: string; number: number; next: string }) {
     this.name = data.name;
     this.number = data.number;
     this.next = data.next;
@@ -25,9 +81,12 @@ export default class Game extends Phaser.Scene {
     Here we create and start all the elements of the game. We create the background, the players, the foes, the shots, the power-ups, the scores, the audios and the colliders.
     */
   create() {
-    this.duration = this.time * 1000;
-    this.width = this.sys.game.config.width;
-    this.height = this.sys.game.config.height;
+    /**
+     * Typescript Addition: This appears unused. I'm commenting it out for now.
+     */
+    // this.duration = this.time * 1000;
+    this.width = Number(this.sys.game.config.width);
+    this.height = Number(this.sys.game.config.height);
     this.center_width = this.width / 2;
     this.center_height = this.height / 2;
     new SceneEffect(this).simpleOpen(() => 0);
@@ -68,24 +127,25 @@ export default class Game extends Phaser.Scene {
     */
   addScores() {
     this.scores = {
-      player1: {},
-      player2: {},
+      player1: {
+        scoreText: this.add
+          .bitmapText(
+            150,
+            16,
+            "wendy",
+            String(this.registry.get("score_player1")).padStart(6, "0"),
+            50
+          )
+          .setOrigin(0.5)
+          .setScrollFactor(0),
+      },
+      player2: {
+        scoreText: this.add
+          .bitmapText(this.width - 150, 16, "wendy", "0".padStart(6, "0"), 50)
+          .setOrigin(0.5)
+          .setScrollFactor(0),
+      },
     };
-
-    this.scores["player1"]["scoreText"] = this.add
-      .bitmapText(
-        150,
-        16,
-        "wendy",
-        String(this.registry.get("score_player1")).padStart(6, "0"),
-        50
-      )
-      .setOrigin(0.5)
-      .setScrollFactor(0);
-    this.scores["player2"]["scoreText"] = this.add
-      .bitmapText(this.width - 150, 16, "wendy", "0".padStart(6, "0"), 50)
-      .setOrigin(0.5)
-      .setScrollFactor(0);
   }
 
   /*
@@ -125,7 +185,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(
       this.players,
       this.foeGroup,
-      this.crashFoe,
+      this.crashFoe as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -135,7 +195,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(
       this.players,
       this.foeWaveGroup,
-      this.crashFoe,
+      this.crashFoe as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -145,7 +205,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.overlap(
       this.shots,
       this.foeGroup,
-      this.destroyFoe,
+      this.destroyFoe as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -155,7 +215,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.overlap(
       this.shots,
       this.foeWaveGroup,
-      this.destroyWaveFoe,
+      this.destroyWaveFoe as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -165,7 +225,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(
       this.players,
       this.powerUps,
-      this.pickPowerUp,
+      this.pickPowerUp as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -175,7 +235,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.overlap(
       this.players,
       this.foeShots,
-      this.hitPlayer,
+      this.hitPlayer as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -185,7 +245,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(
       this.shots,
       this.foeShots,
-      this.destroyShot,
+      this.destroyShot as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       () => {
         return true;
       },
@@ -197,9 +257,8 @@ export default class Game extends Phaser.Scene {
   /*
     This is the callback for the world bounds and we will use it to destroy elements that the game does not need anymore. We check if the element is a shot and if it is, we destroy it. We also destroy the shadow of the shot. We do this because the shadow is not a child of the shot, so it will not be destroyed automatically.
     */
-  onWorldBounds(body, t) {
-    const name = body.gameObject.name.toString();
-    if (["foeshot", "shot"].includes(name)) {
+  onWorldBounds(body: Phaser.Physics.Arcade.Body) {
+    if (isShot(body.gameObject)) {
       body.gameObject.shadow.destroy();
       body.gameObject.destroy();
     }
@@ -208,7 +267,7 @@ export default class Game extends Phaser.Scene {
   /*
     This is the callback for the collision between two shots. We destroy both shots and we create an explosion where they meet.
     */
-  destroyShot(shot, foeShot) {
+  destroyShot(shot: Shot, foeShot: FoeShot) {
     const point = this.lights.addPointLight(shot.x, shot.y, 0xffffff, 10, 0.7);
     this.tweens.add({
       targets: point,
@@ -226,7 +285,7 @@ export default class Game extends Phaser.Scene {
   /*
     This is called when we destroy a foe that is part of a wave.
     */
-  destroyWaveFoe(shot, foe) {
+  destroyWaveFoe(shot: Shot, foe: Foe) {
     this.lastDestroyedWaveFoe = { x: foe.x, y: foe.y };
     this.destroyFoe(shot, foe);
   }
@@ -234,7 +293,7 @@ export default class Game extends Phaser.Scene {
   /*
   This is the callback we call when a shot hits a foe. We destroy the shot and we decrease the lives of the foe. If the foe has no more lives, we destroy it and we create an explosion. We also add the points to the score of the player who shoots the foe.
     */
-  destroyFoe(shot, foe) {
+  destroyFoe(shot: Shot, foe: Foe) {
     foe.lives--;
     this.playAudio("foexplosion");
     const point = this.lights.addPointLight(shot.x, shot.y, 0xffffff, 10, 0.7);
@@ -274,32 +333,32 @@ export default class Game extends Phaser.Scene {
   /*
   This one is called when a foe shot hits the player. Unless the player is blinking (because it just started), we destroy the player and we create an explosion. We also destroy the shadow of the shot. Then we respawn the player
     */
-  hitPlayer(player, shot) {
+  hitPlayer(player: Player, shot: Shot) {
     if (player.blinking) return;
 
-    this.players.remove(this.player);
+    if (this.player) this.players.remove(this.player);
     player.dead();
     this.playAudio("explosion");
     shot.shadow.destroy();
     shot.destroy();
-    this.time.delayedCall(1000, () => this.respawnPlayer(), null, this);
+    this.time.delayedCall(1000, () => this.respawnPlayer(), undefined, this);
   }
 
   /*
     This one is called when a player crashes with a foe. Unless the player is blinking (because it just started), we destroy the player, and the foe and also at the end we respawn the player.
     */
-  crashFoe(player, foe) {
+  crashFoe(player: Player, foe: Foe) {
     if (player.blinking) return;
     player.dead();
     this.playAudio("explosion");
     foe.dead();
-    this.time.delayedCall(1000, () => this.respawnPlayer(), null, this);
+    this.time.delayedCall(1000, () => this.respawnPlayer(), undefined, this);
   }
 
   /*
     This is the callback when the player picks a powerup. We update the power-up of the player and we destroy the power-up. We also create a tween to make the player blink.
     */
-  pickPowerUp(player, powerUp) {
+  pickPowerUp(player: Player, powerUp: PowerUp) {
     this.playAudio("stageclear1");
     this.updatePowerUp(player, powerUp);
     this.tweens.add({
@@ -325,7 +384,7 @@ export default class Game extends Phaser.Scene {
       alpha: { from: 0, to: 1 },
       repeat: 10,
       onComplete: () => {
-        this.player.blinking = false;
+        if (this.player) this.player.blinking = false;
       },
     });
   }
@@ -346,7 +405,7 @@ export default class Game extends Phaser.Scene {
     };
   }
 
-  playAudio(key) {
+  playAudio(key: keyof typeof this.audios) {
     this.audios[key].play();
   }
 
@@ -354,7 +413,7 @@ export default class Game extends Phaser.Scene {
     The game loop is as simple as this. We update the player and the foes. We also update the background to make it scroll.
     */
   update() {
-    if (this.player) this.player.update();
+    if (this.player) this.player?.update();
     this.foes.update();
     this.background.tilePositionY -= 10;
   }
@@ -363,16 +422,28 @@ export default class Game extends Phaser.Scene {
     When the player finishes the stage, we destroy all the elements and we start the transition to the next scene.
     */
   endScene() {
-    this.foeWaveGroup.children.entries.forEach((foe) => foe.shadow.destroy());
-    this.foeGroup.children.entries.forEach((foe) => foe.shadow.destroy());
-    this.shots.children.entries.forEach((shot) => shot.shadow.destroy());
-    this.foeShots.children.entries.forEach((shot) => shot.shadow.destroy());
+    /**
+     * Typescript Addition: This is pretty ugly! Phaser desperately needs proper generics to stop erasing types like this!
+     */
+
+    this.foeWaveGroup.children.entries.forEach(
+      (foe) => foe instanceof Foe && foe.shadow?.destroy()
+    );
+    this.foeGroup.children.entries.forEach(
+      (foe) => foe instanceof Foe && foe.shadow?.destroy()
+    );
+    this.shots.children.entries.forEach(
+      (shot) => shot instanceof Shot && shot.shadow.destroy()
+    );
+    this.foeShots.children.entries.forEach(
+      (shot) => shot instanceof FoeShot && shot.shadow.destroy()
+    );
     this.time.delayedCall(
       2000,
       () => {
         this.finishScene();
       },
-      null,
+      undefined,
       this
     );
   }
@@ -394,7 +465,7 @@ export default class Game extends Phaser.Scene {
   /*
     The power-up looks the same but the effect is different. We keep increasing its value so we can apply the effect to the player. In this game, the power-up applies another shooting pattern.
     */
-  updatePowerUp(player, powerUp) {
+  updatePowerUp(player: Player, powerUp: PowerUp) {
     player.powerUp = this.available[this.currentPowerUp];
     this.currentPowerUp =
       this.currentPowerUp + 1 === this.available.length
@@ -406,7 +477,7 @@ export default class Game extends Phaser.Scene {
   /*
     This is the method we use to update the score of the player. We get the score from the registry and we update it. We also create a tween to make the score text blink.
     */
-  updateScore(playerName, points = 0) {
+  updateScore(playerName: PlayerName, points = 0) {
     const score = +this.registry.get("score_" + playerName) + points;
     this.registry.set("score_" + playerName, score);
     this.scores[playerName]["scoreText"].setText(

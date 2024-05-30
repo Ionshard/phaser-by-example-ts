@@ -1,15 +1,39 @@
 import FoeShot from "./foe_shot";
 import Explosion from "./explosion";
+import Game from "../scenes/game";
 
 const TYPES = {
   foe0: { points: 400, lives: 1 },
   foe1: { points: 500, lives: 3 },
   foe2: { points: 800, lives: 2 },
   guinxu: { points: 10000, lives: 20 },
-};
+} as const;
+
+export type FoeType = keyof typeof TYPES;
 
 class Foe extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y, name = "foe0", velocityX = 0, velocityY = 0) {
+  shadow:
+    | (Phaser.GameObjects.Image & { body: Phaser.Physics.Arcade.Body })
+    | null;
+  points: number;
+  lives: number;
+  id: number;
+  patternIndex: number;
+  pattern: number[];
+  direction: number;
+
+  declare body: Phaser.Physics.Arcade.Body;
+  declare scene: Game;
+  declare name: FoeType;
+
+  constructor(
+    scene: Game,
+    x: number,
+    y: number,
+    name: FoeType = "foe0",
+    velocityX = 0,
+    velocityY = 0
+  ) {
     super(scene, x, y, name);
     this.name = name;
     this.points = TYPES[name].points;
@@ -54,15 +78,21 @@ class Foe extends Phaser.GameObjects.Sprite {
   /*
     This function spawns a shadow for each foe. We'll have to update it with the foe itself.
     */
-  spawnShadow(x, y) {
+  spawnShadow(x: number, y: number) {
+    /**
+     * Typescript addition: I would love to do this better. I hate type
+     * assertions! However, it's better to do one assertion here on creation
+     * rather than every time we use it.
+     */
     this.shadow = this.scene.add
       .image(x + 20, y + 20, this.name)
       .setScale(0.7)
       .setTint(0x000000)
-      .setAlpha(0.4);
+      .setAlpha(0.4) as NonNullable<typeof this.shadow>;
   }
 
   updateShadow() {
+    if (!this.shadow) return;
     this.shadow.x = this.x + 20;
     this.shadow.y = this.y + 20;
   }
@@ -86,7 +116,7 @@ class Foe extends Phaser.GameObjects.Sprite {
     */
   update() {
     if (this.y > this.scene.height + 64) {
-      if (this.name !== "foe2") this.shadow.destroy();
+      if (this.name !== "foe2") this.shadow?.destroy();
       this.destroy();
     }
 
@@ -184,7 +214,7 @@ class Foe extends Phaser.GameObjects.Sprite {
   /*
     As we do when destroying shots, this function shows the points when a foe is destroyed with a simple tween effect.
     */
-  showPoints(score, color = 0xff0000) {
+  showPoints(score: number, color = 0xff0000) {
     let text = this.scene.add
       .bitmapText(this.x + 20, this.y - 30, "wendy", "+" + score, 40, color)
       .setOrigin(0.5);

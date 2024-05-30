@@ -1,9 +1,35 @@
+import Game, { PlayerName } from "../scenes/game";
 import Explosion from "./explosion";
 import { LightParticle } from "./particle";
-import ShootingPatterns from "./shooting_patterns";
+import ShootingPatterns, { ShootingPatternType } from "./shooting_patterns";
 
 class Player extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y, name = "player1", powerUp = "water") {
+  powerUp: ShootingPatternType;
+  id: number;
+  power: number;
+  blinking: boolean;
+  shootingPatterns: ShootingPatterns;
+  shadow: Phaser.GameObjects.Image;
+  upDelta: number;
+  SPACE: Phaser.Input.Keyboard.Key;
+  cursor: Phaser.Types.Input.Keyboard.CursorKeys;
+  W: Phaser.Input.Keyboard.Key;
+  A: Phaser.Input.Keyboard.Key;
+  S: Phaser.Input.Keyboard.Key;
+  D: Phaser.Input.Keyboard.Key;
+  death: any;
+
+  declare body: Phaser.Physics.Arcade.Body;
+  declare scene: Game;
+  declare name: PlayerName;
+
+  constructor(
+    scene: Game,
+    x: number,
+    y: number,
+    name: PlayerName = "player1",
+    powerUp: ShootingPatternType = "water"
+  ) {
     super(scene, x, y, name);
     this.name = name;
     this.spawnShadow(x, y);
@@ -25,7 +51,7 @@ class Player extends Phaser.GameObjects.Sprite {
   /*
     We add a shadow to the player, and we'll have to update its position with the player. Alternatively, we could have defined a Container with the player and the shadow.
     */
-  spawnShadow(x, y) {
+  spawnShadow(x: number, y: number) {
     this.shadow = this.scene.add
       .image(x + 20, y + 20, "player1")
       .setTint(0x000000)
@@ -72,6 +98,8 @@ class Player extends Phaser.GameObjects.Sprite {
     We set the controls for the player. We'll use the cursor keys and WASD keys to move the player, and the space bar to shoot.
     */
   setControls() {
+    if (!this.scene.input.keyboard) throw Error("Must have a keyboard to play");
+
     this.SPACE = this.scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.SPACE
     );
@@ -93,7 +121,7 @@ class Player extends Phaser.GameObjects.Sprite {
   /*
     This is the game loop for the player. We'll check if the player is moving, and if so, we'll play the corresponding animation. We'll also check if the player is shooting, and if so, we'll call the shoot method.
     */
-  update(timestep, delta) {
+  update() {
     if (this.death) return;
     if (this.cursor.left.isDown) {
       this.x -= 5;
@@ -134,9 +162,16 @@ class Player extends Phaser.GameObjects.Sprite {
   /*
     Every time the player destroys a foe or a shot we show the points. We'll use a bitmap text for that.
     */
-  showPoints(score, color = 0xff0000) {
+  showPoints(score: number, color = 0xff0000) {
     let text = this.scene.add
-      .bitmapText(this.x + 20, this.y - 30, "starshipped", score, 20, 0xfffd37)
+      .bitmapText(
+        this.x + 20,
+        this.y - 30,
+        "starshipped",
+        score.toString(),
+        20,
+        0xfffd37
+      )
       .setOrigin(0.5);
     this.scene.tweens.add({
       targets: text,

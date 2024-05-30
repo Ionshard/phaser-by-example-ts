@@ -1,11 +1,20 @@
 export default class Outro extends Phaser.Scene {
+  width: number;
+  height: number;
+  center_width: number;
+  center_height: number;
+  introLayer: Phaser.GameObjects.Layer;
+  splashLayer: Phaser.GameObjects.Layer;
+  text: string[];
+  player1: Phaser.GameObjects.Sprite;
+
   constructor() {
     super({ key: "outro" });
   }
 
   create() {
-    this.width = this.sys.game.config.width;
-    this.height = this.sys.game.config.height;
+    this.width = Number(this.sys.game.config.width);
+    this.height = Number(this.sys.game.config.height);
     this.center_width = this.width / 2;
     this.center_height = this.height / 2;
     this.introLayer = this.add.layer();
@@ -22,7 +31,7 @@ export default class Outro extends Phaser.Scene {
     this.showHistory();
     this.showPlayer();
 
-    this.input.keyboard.on("keydown-ENTER", this.startSplash, this);
+    this.input.keyboard?.on("keydown-ENTER", this.startSplash, this);
   }
 
   /*
@@ -33,14 +42,14 @@ export default class Outro extends Phaser.Scene {
       this.time.delayedCall(
         (i + 1) * 2000,
         () => this.showLine(line, (i + 1) * 60),
-        null,
+        undefined,
         this
       );
     });
-    this.time.delayedCall(4000, () => this.showPlayer(), null, this);
+    this.time.delayedCall(4000, () => this.showPlayer(), undefined, this);
   }
 
-  showLine(text, y) {
+  showLine(text: string, y: number) {
     let line = this.introLayer.add(
       this.add
         .bitmapText(this.center_width, y, "wendy", text, 50)

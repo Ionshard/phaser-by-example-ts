@@ -1,5 +1,18 @@
 class Explosion {
-  constructor(scene, x, y, radius = 5, min = 5, max = 7) {
+  scene: Phaser.Scene;
+  radius: number;
+  x: number;
+  y: number;
+  lights: Phaser.GameObjects.PointLight[];
+
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    radius = 5,
+    min = 5,
+    max = 7
+  ) {
     this.scene = scene;
     this.radius = radius;
     this.x = x;

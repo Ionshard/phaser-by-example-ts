@@ -1,9 +1,20 @@
 export default class Transition extends Phaser.Scene {
+  name: string;
+  number: number;
+  next: string;
+  width: number;
+  height: number;
+  center_width: number;
+  center_height: number;
+  theme:
+    | Phaser.Sound.NoAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.WebAudioSound;
   constructor() {
     super({ key: "transition" });
   }
 
-  init(data) {
+  init(data: { name: string; number: number; next: string }) {
     this.name = data.name;
     this.number = data.number;
     this.next = data.next;
@@ -20,8 +31,8 @@ export default class Transition extends Phaser.Scene {
       "FINAL BOSS",
     ];
 
-    this.width = this.sys.game.config.width;
-    this.height = this.sys.game.config.height;
+    this.width = Number(this.sys.game.config.width);
+    this.height = Number(this.sys.game.config.height);
     this.center_width = this.width / 2;
     this.center_height = this.height / 2;
     this.sound.add("stageclear2").play();
@@ -45,7 +56,7 @@ export default class Transition extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.playMusic("music" + (this.number !== 4 ? this.number : 1));
-    this.time.delayedCall(2000, () => this.loadNext(), null, this);
+    this.time.delayedCall(2000, () => this.loadNext(), undefined, this);
   }
 
   loadNext() {

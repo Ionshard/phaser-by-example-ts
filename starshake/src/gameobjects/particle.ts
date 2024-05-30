@@ -1,5 +1,13 @@
 export class LightParticle extends Phaser.GameObjects.PointLight {
-  constructor(scene, x, y, color = 0xffffff, radius = 5, intensity = 0.5) {
+  declare body: Phaser.Physics.Arcade.Body;
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    color = 0xffffff,
+    radius = 5,
+    intensity = 0.5
+  ) {
     super(scene, x, y, color, radius, intensity);
     this.name = "celtic";
     this.scene = scene;

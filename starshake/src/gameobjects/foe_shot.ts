@@ -1,18 +1,24 @@
+import { FoeType } from "./foe";
+
 const TYPES = {
   chocolate: { color: 0xaf8057, radius: 16, intensity: 0.4 },
   vanila: { color: 0xfff6d5, radius: 16, intensity: 0.4 },
   fruit: { color: 0x00ff00, radius: 16, intensity: 0.4 },
   water: { color: 0x0000cc, radius: 16, intensity: 0.4 },
   foe: { color: 0xfff01f, radius: 16, intensity: 0.4 },
-};
+} as const;
 
 class FoeShot extends Phaser.GameObjects.PointLight {
+  playerName: FoeType;
+  shadow: Phaser.GameObjects.Arc & { body: Phaser.Physics.Arcade.Body };
+
+  declare body: Phaser.Physics.Arcade.Body;
   constructor(
-    scene,
-    x,
-    y,
-    type = "water",
-    playerName,
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    type: keyof typeof TYPES = "water",
+    playerName: FoeType,
     velocityX = 0,
     velocityY = -300
   ) {
@@ -37,14 +43,19 @@ class FoeShot extends Phaser.GameObjects.PointLight {
   /*
     This function spawns a shadow for each shot. We'll have to update it with the shot itself.
     */
-  spawnShadow(x, y, velocityX, velocityY) {
+  spawnShadow(x: number, y: number, velocityX: number, velocityY: number) {
+    /**
+     * Typescript addition: I would love to do this better. I hate type
+     * assertions! However, it's better to do one assertion here on creation
+     * rather than every time we use it.
+     */
     this.shadow = this.scene.add
       .circle(x + 20, y + 20, 10, 0x000000)
-      .setAlpha(0.4);
+      .setAlpha(0.4) as typeof this.shadow;
     this.scene.add.existing(this.shadow);
     this.scene.physics.add.existing(this.shadow);
     if (this.playerName === "guinxu")
-      this.shadow.body.setVelocity(velocityX, velocityY);
+      this.shadow.body?.setVelocity(velocityX, velocityY);
   }
 
   /*
@@ -82,7 +93,7 @@ class FoeShot extends Phaser.GameObjects.PointLight {
   /*
     This function shows the points when the shot is destroyed. The points are shown in a bitmap text and they are tweened to make them move up and fade out.
     */
-  showPoints(score, color = 0xff0000) {
+  showPoints(score: number, color = 0xff0000) {
     let text = this.scene.add
       .bitmapText(this.x + 20, this.y - 30, "wendy", "+" + score, 40, color)
       .setOrigin(0.5);

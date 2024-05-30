@@ -5,7 +5,7 @@ import Splash from "./scenes/splash";
 import Transition from "./scenes/transition";
 import Game from "./scenes/game";
 
-const config = {
+const config: Phaser.Types.Core.GameConfig = {
   width: 1000,
   height: 800,
   scale: {
@@ -17,11 +17,11 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 0 },
+      gravity: { x: 0, y: 0 },
       debug: false,
     },
   },
   scene: [Bootloader, Splash, Transition, Game, Outro],
 };
 
-const game = new Phaser.Game(config);
+export const game = new Phaser.Game(config);

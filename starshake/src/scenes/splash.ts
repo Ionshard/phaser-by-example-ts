@@ -1,21 +1,34 @@
 import SceneEffect from "../gameobjects/scene_effect";
 
 export default class Splash extends Phaser.Scene {
+  width: number;
+  height: number;
+  center_width: number;
+  center_height: number;
+  background: Phaser.GameObjects.TileSprite;
+  theme:
+    | Phaser.Sound.NoAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.WebAudioSound
+    | undefined;
+  gameLogoShadow: Phaser.GameObjects.Image;
+  gameLogo: Phaser.GameObjects.Image;
+  space: Phaser.GameObjects.BitmapText;
   constructor() {
     super({ key: "splash" });
   }
 
   create() {
-    this.width = this.sys.game.config.width;
-    this.height = this.sys.game.config.height;
+    this.width = Number(this.sys.game.config.width);
+    this.height = Number(this.sys.game.config.height);
     this.center_width = this.width / 2;
     this.center_height = this.height / 2;
     this.addBackground();
     this.showLogo();
     this.registry.set("currentPowerUp", 0);
-    this.time.delayedCall(1000, () => this.showInstructions(), null, this);
+    this.time.delayedCall(1000, () => this.showInstructions(), undefined, this);
 
-    this.input.keyboard.on(
+    this.input.keyboard?.on(
       "keydown-SPACE",
       () => this.transitionToChange(),
       this

@@ -1,18 +1,25 @@
+import { PlayerName } from "../scenes/game";
+
 const TYPES = {
   chocolate: { color: 0xaf8057, radius: 16, intensity: 0.4 },
   vanila: { color: 0xfff6d5, radius: 16, intensity: 0.4 },
   fruit: { color: 0xffffff, radius: 16, intensity: 0.4 },
   water: { color: 0xffffff, radius: 16, intensity: 0.4 },
   foe: { color: 0x00ff00, radius: 16, intensity: 0.4 },
-};
+} as const;
 
 class Shot extends Phaser.GameObjects.PointLight {
+  playerName: PlayerName;
+  shadow: Phaser.GameObjects.Arc & { body: Phaser.Physics.Arcade.Body };
+
+  declare body: Phaser.Physics.Arcade.Body;
+
   constructor(
-    scene,
-    x,
-    y,
-    type = "water",
-    playerName,
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    type: keyof typeof TYPES = "water",
+    playerName: PlayerName,
     velocityX = 0,
     velocityY = -500
   ) {
@@ -36,10 +43,15 @@ class Shot extends Phaser.GameObjects.PointLight {
   /*
    Each shot will have a shadow, which will be a circle with a lower alpha value.
     */
-  spawnShadow(x, y, velocityX, velocityY) {
+  spawnShadow(x: number, y: number, velocityX: number, velocityY: number) {
+    /**
+     * Typescript addition: I would love to do this better. I hate type
+     * assertions! However, it's better to do one assertion here on creation
+     * rather than every time we use it.
+     */
     this.shadow = this.scene.add
       .circle(x + 20, y + 20, 10, 0x000000)
-      .setAlpha(0.4);
+      .setAlpha(0.4) as typeof this.shadow;
     this.scene.add.existing(this.shadow);
     this.scene.physics.add.existing(this.shadow);
     this.shadow.body.setVelocityX(velocityX);
